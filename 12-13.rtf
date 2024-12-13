@@ -6,10 +6,63 @@
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 
 \f0\fs36 \cf0 Today:\
-- Iterate through sats first instead of color when assigning users\
 - Set up debugger\
-- Attempt to use angle_between in is_beam_within_45_degrees and is_user_within_10_degrees\
 \
 Tomorrow:\
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
-\cf0 - Attempt to use angle_between in is_beam_within_45_degrees and is_user_within_10_degrees}
+\cf0 - Attempt to use angle_between in is_beam_within_45_degrees and is_user_within_10_degrees\
+\
+Explored optimizations:\
+- Sort sats in order of priority by the number of viable sats and assign them based on that priority\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 - Iterate through sats first instead of color when assigning users\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+For iterating through sats first instead of color when assigning users, we must iterate through the sats and attempt to assign user to a sat. If we do not find a match between the first sat, we go to the next, and the next, and the next. If we do not find a match for any of the sats, then we go to the next color and try again. So what we are really doing is iterating through the colors and for each color we iterate through the sats.\
+\
+For analyzing the assignments, we want to know how many users got assigned to each sat, \
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+}

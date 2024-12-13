@@ -27,7 +27,8 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                     solution[user] = (sat, color)
                     color_buckets[color].append(user)
                     break  # Stop checking other colors once assigned
-
+                    
+    print(f'solution: {solution}')
     return solution
 
 
