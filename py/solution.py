@@ -5,28 +5,35 @@ import math
 
 def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tuple[Sat, Color]]:
     colors = [Color.A, Color.B, Color.C, Color.D]
-    count = 0
     solution = {}
+    color_buckets = {Color.A: [], Color.B: [], Color.C: [], Color.D: []}
+
     for sat, sat_pos in sats.items():
-        potential_users = []
-        # Find set of potential users
-        for user, user_pos in users.items():
-            if is_beam_within_45_degrees(user_pos, sat_pos):
-                potential_users.append(user)
-        print('potential users')
-        print(potential_users)
+        # Find potential users
+        potential_users = [
+            user for user, user_pos in users.items()
+            if user not in solution and is_beam_within_45_degrees(user_pos, sat_pos)
+        ]
 
         for user in potential_users:
-            print(f'user: {user}')
-            # if user not in solution and True not in [
-            #     is_user_within_10_degrees(sat_pos, users[user], users[other_user])
-            #     for other_user in potential_users
-            #     if other_user != user and other_user > user
-            # ]:
-            solution[user] = (sat, colors[count%len(colors)])
-            count += 1
+            assigned = False  # Track if user is assigned
+
+            # Attempt to assign the user to a color
+            for color in colors:
+                # Check interference with all users in the current color bucket
+                if all(
+                    not is_user_within_10_degrees(sat_pos, users[user], users[color_user])
+                    for color_user in color_buckets[color]
+                ):
+                    # Assign user to satellite and color
+                    solution[user] = (sat, color)
+                    color_buckets[color].append(user)
+                    assigned = True
+                    break  # Stop checking other colors once assigned
 
     return solution
+
+
 def is_beam_within_45_degrees(user_position, satellite_position):
     """
     Determines if a satellite's beam serving a user is within 45 degrees of vertical
@@ -68,10 +75,6 @@ def is_beam_within_45_degrees(user_position, satellite_position):
     return cos_theta >= threshold - epsilon
 
 def is_user_within_10_degrees(sat, user1, user2):
-    print('is_user_within_10_degrees')
-    print(f'sat: {sat}')
-    print(f'user1: {user1}')
-    print(f'user2: {user2}')
     """
     Determines if the angle between the beams from the satellite to two users is within 10 degrees.
 
@@ -108,6 +111,4 @@ def is_user_within_10_degrees(sat, user1, user2):
     angle_in_degrees = math.degrees(math.acos(cos_theta))
     
     # Return True if the angle is within 10 degrees
-    print(angle_in_degrees)
-    print(angle_in_degrees <= 10)
     return angle_in_degrees <= 10
