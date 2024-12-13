@@ -8,22 +8,10 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
     solution = {}
     color_buckets = {Color.A: [], Color.B: [], Color.C: [], Color.D: []}
 
-    # OPTIMIZATION TO SORT USERS BY NUMBER OF SATS COMPATIBLE
-    user_rank = {}
-    unsorted_users = [user for user in users.keys()]
-    for user in unsorted_users:
-        user_rank[user] = 0
-        for sat in sats:
-            if is_beam_within_45_degrees(users[user], sats[sat]):
-                user_rank[user] += 1
-    
-    # Order the users by rank by least to greatest
-    sorted_users = sorted(unsorted_users, key=lambda user:-user_rank[user])
-
     for sat, sat_pos in sats.items():
         # Find potential users
         potential_users = [
-            user for user in sorted_users
+            user for user in users 
             if user not in solution and is_beam_within_45_degrees(users[user], sat_pos)
         ]
 
