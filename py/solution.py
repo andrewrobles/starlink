@@ -8,27 +8,24 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
     solution = {}
     color_buckets = {Color.A: [], Color.B: [], Color.C: [], Color.D: []}
 
-    for sat, sat_pos in sats.items():
+    for sat in sats.keys():
         # Find potential users
         potential_users = [
             user for user in users 
-            if user not in solution and is_beam_within_45_degrees(users[user], sat_pos)
+            if user not in solution and is_beam_within_45_degrees(users[user], sats[sat])
         ]
 
         for user in potential_users:
-            assigned = False  # Track if user is assigned
-
             # Attempt to assign the user to a color
             for color in colors:
                 # Check interference with all users in the current color bucket
                 if all(
-                    not is_user_within_10_degrees(sat_pos, users[user], users[color_user])
+                    not is_user_within_10_degrees(sats[sat], users[user], users[color_user])
                     for color_user in color_buckets[color]
                 ):
                     # Assign user to satellite and color
                     solution[user] = (sat, color)
                     color_buckets[color].append(user)
-                    assigned = True
                     break  # Stop checking other colors once assigned
 
     return solution
