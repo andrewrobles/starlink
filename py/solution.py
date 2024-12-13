@@ -4,8 +4,6 @@ from util import Color, Sat, User, Vector3
 import math
 
 def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tuple[Sat, Color]]:
-    print(f'users: {users}')
-    print(f'sats: {sats}')
     colors = [Color.A, Color.B, Color.C, Color.D]
     solution = {}
     color_buckets = {Color.A: [], Color.B: [], Color.C: [], Color.D: []}
