@@ -15,15 +15,16 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
         }
 
     satellites = {}
-    for sat in sats:
-        satellites[sat] = {
-            'visible_users': [user for user in users if is_beam_within_45_degrees(users[user], sats[sat])]
+    for satellite in sats:
+        satellites[satellite] = {
+            'visible_users': [user for user in users if is_beam_within_45_degrees(users[user], sats[satellite])]
         }
 
     user_data = {}
     for user in users:
         user_data[user] = {
-            'assigned': False
+            'assigned': False,
+            'visible_satellites': [satellite for satellite in sats if is_beam_within_45_degrees(users[user], sats[satellite])]
         }
 
     for sat in sats:
@@ -43,7 +44,14 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                     colors[color]['users'].append(user)
                     user_data[user]['assigned'] = True
                     break  # Stop checking other colors once assigned
-                    
+
+    unassigned_users = [user for user, data in user_data.items() if not data['assigned']]
+    print('============================================================')
+    print('Unassigned Users')
+    print('============================================================')
+    for user in unassigned_users:
+        print(f'user: {user}, visible_satellites: {user_data[user]['visible_satellites']}')
+
     return solution
 
 
