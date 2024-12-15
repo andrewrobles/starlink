@@ -33,9 +33,10 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
             # Attempt to assign the user to a color
             for color in colors.keys():
                 # Check interference with all users in the current color bucket
+                color_users = [user for user in colors[color]['users'] if user in satellites[sat]['visible_users']]
                 if all(
                     not is_user_within_10_degrees(sats[sat], users[user], users[color_user])
-                    for color_user in colors[color]['users']
+                    for color_user in color_users
                 ):
                     # Assign user to satellite and color
                     solution[user] = (sat, color)
