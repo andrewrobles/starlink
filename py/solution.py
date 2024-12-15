@@ -6,13 +6,16 @@ import math
 def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tuple[Sat, Color]]:
     solution = {}
     color_users = {color: [] for color in [Color.A, Color.B, Color.C, Color.D]}
-    sat_users = { sat: [user for user in users if is_beam_within_45_degrees(users[user], sats[sat])] for sat in sats}
-    user_assigned = { user: False for user in users}
-
+    sat_users = {}
+    sat_availability = {}
     for sat in sats:
-        potential_users = [
-            user for user in sat_users[sat]
-            if not user_assigned[user]]
+        sat_users[sat] = [user for user in users if is_beam_within_45_degrees(users[user], sats[sat])]
+        sat_availability = { sat: 0 for sat in sats}
+    user_assigned = { user: False for user in users}
+    sorted_sats = sorted(list(sats), key=lambda sat:len(sat_users[sat]))
+
+    for sat in sorted_sats:
+        potential_users = [user for user in sat_users[sat] if not user_assigned[user]]
 
         for user in potential_users:
             # Attempt to assign the user to a color
