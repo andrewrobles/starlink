@@ -3,6 +3,8 @@ from typing import Dict, List, Tuple
 from util import Color, Sat, User, Vector3
 import math
 
+MAX_USERS_PER_SAT = 32
+
 def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tuple[Sat, Color]]:
     solution = {}
     color_users = {color: [] for color in [Color.A, Color.B, Color.C, Color.D]}
@@ -12,7 +14,7 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
         sat_users[sat] = [user for user in users if is_beam_within_45_degrees(users[user], sats[sat])]
         sat_availability = { sat: 0 for sat in sats}
     user_assigned = { user: False for user in users}
-    sorted_sats = sorted(list(sats), key=lambda sat:len(sat_users[sat]))
+    sorted_sats = sorted(list(sats), key=lambda sat:len(sat_users[sat]), reverse=True)
 
     for sat in sorted_sats:
         potential_users = [user for user in sat_users[sat] if not user_assigned[user]]
@@ -22,13 +24,14 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
             for color in color_users.keys():
                 # Check interference with all users in the current color bucket
                 if all(
-                    not is_user_within_10_degrees(sats[sat], users[user], users[color_user])
+                    sat_availability[sat] < MAX_USERS_PER_SAT and not is_user_within_10_degrees(sats[sat], users[user], users[color_user])
                     for color_user in color_users[color]
                 ):
                     # Assign user to satellite and color
                     solution[user] = (sat, color)
                     color_users[color].append(user)
                     user_assigned[user] = True
+                    sat_availability[sat] += 1
                     break  # Stop checking other colors once assigned
                     
     return solution
