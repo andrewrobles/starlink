@@ -4,11 +4,10 @@ from util import Color, Sat, User, Vector3
 import math
 
 def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tuple[Sat, Color]]:
-    colors = [Color.A, Color.B, Color.C, Color.D]
     solution = {}
-    color_buckets = {Color.A: [], Color.B: [], Color.C: [], Color.D: []}
+    color_users = {color: [] for color in [Color.A, Color.B, Color.C, Color.D]}
 
-    for sat in sats.keys():
+    for sat in sats:
         # Find potential users
         potential_users = [
             user for user in users 
@@ -17,18 +16,17 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
 
         for user in potential_users:
             # Attempt to assign the user to a color
-            for color in colors:
+            for color in color_users.keys():
                 # Check interference with all users in the current color bucket
                 if all(
                     not is_user_within_10_degrees(sats[sat], users[user], users[color_user])
-                    for color_user in color_buckets[color]
+                    for color_user in color_users[color]
                 ):
                     # Assign user to satellite and color
                     solution[user] = (sat, color)
-                    color_buckets[color].append(user)
+                    color_users[color].append(user)
                     break  # Stop checking other colors once assigned
                     
-    print(f'solution: {solution}')
     return solution
 
 
