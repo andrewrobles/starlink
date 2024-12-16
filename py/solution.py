@@ -48,31 +48,32 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
     for user, data in user_data.items():
         if data['assigned']:
             break
-        for satellite in data['viable_satellites']:
-            for color in colors.keys():
-                color_users = [user for user in colors[color]['users'] if user in satellites[satellite]['viable_users']]
-                if all(
-                    not is_user_within_10_degrees(sats[satellite], users[user], users[color_user])
-                    for color_user in color_users
-                ):
-                    solution[user] = (satellite, color)
-                    colors[color]['users'].append(user)
-                    user_data[user]['assigned'] = True
-                    break
+        for satellite in sats:
+            if is_beam_within_45_degrees(users[user], sats[satellite]):
+                for color in colors.keys():
+                    color_users = [user for user in colors[color]['users'] if user in satellites[satellite]['viable_users']]
+                    if all(
+                        not is_user_within_10_degrees(sats[satellite], users[user], users[color_user])
+                        for color_user in color_users
+                    ):
+                        solution[user] = (satellite, color)
+                        colors[color]['users'].append(user)
+                        user_data[user]['assigned'] = True
+                        break
 
     unassigned_users = [user for user, data in user_data.items() if not data['assigned']]
     for user in unassigned_users:
         print('============================================================')
         print(f'user: {user}')
-        for satellite in data['viable_satellites']:
-            for color in colors.keys():
-                color_users = [user for user in colors[color]['users'] if user in satellites[satellite]['viable_users']]
-                conflicts = sum(
-                    is_user_within_10_degrees(sats[satellite], users[user], users[color_user])
-                    for color_user in color_users
-                )
-                print(f'satellite: {satellite}, color: {color}, conflicts: {conflicts}')
-                
+        for satellite in sats:
+            if is_beam_within_45_degrees(users[user], sats[satellite]):
+                for color in colors.keys():
+                    color_users = [user for user in colors[color]['users'] if user in satellites[satellite]['viable_users']]
+                    conflicts = sum(
+                        is_user_within_10_degrees(sats[satellite], users[user], users[color_user])
+                        for color_user in color_users
+                    )
+                    print(f'satellite: {satellite}, color: {color}, conflicts: {conflicts}')
 
     return solution
 
