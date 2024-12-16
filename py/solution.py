@@ -17,24 +17,24 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
     satellites = {}
     for satellite in sats:
         satellites[satellite] = {
-            'visible_users': [user for user in users if is_beam_within_45_degrees(users[user], sats[satellite])]
+            'viable_users': [user for user in users if is_beam_within_45_degrees(users[user], sats[satellite])]
         }
 
     user_data = {}
     for user in users:
         user_data[user] = {
             'assigned': False,
-            'visible_satellites': [satellite for satellite in sats if is_beam_within_45_degrees(users[user], sats[satellite])]
+            'viable_satellites': [satellite for satellite in sats if is_beam_within_45_degrees(users[user], sats[satellite])]
         }
 
     for satellite in sats:
-        potential_users = [user for user in satellites[satellite]['visible_users'] if not user_data[user]['assigned']]
+        potential_users = [user for user in satellites[satellite]['viable_users'] if not user_data[user]['assigned']]
 
         for user in potential_users:
             # Attempt to assign the user to a color
             for color in colors.keys():
                 # Check interference with all users in the current color bucket
-                color_users = [user for user in colors[color]['users'] if user in satellites[satellite]['visible_users']]
+                color_users = [user for user in colors[color]['users'] if user in satellites[satellite]['viable_users']]
                 if all(
                     not is_user_within_10_degrees(sats[satellite], users[user], users[color_user])
                     for color_user in color_users
@@ -48,9 +48,9 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
     for user, data in user_data.items():
         if data['assigned']:
             break
-        for satellite in data['visible_satellites']:
+        for satellite in data['viable_satellites']:
             for color in colors.keys():
-                color_users = [user for user in colors[color]['users'] if user in satellites[satellite]['visible_users']]
+                color_users = [user for user in colors[color]['users'] if user in satellites[satellite]['viable_users']]
                 if all(
                     not is_user_within_10_degrees(sats[satellite], users[user], users[color_user])
                     for color_user in color_users
@@ -61,11 +61,18 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                     break
 
     unassigned_users = [user for user, data in user_data.items() if not data['assigned']]
-    print('============================================================')
-    print('Unassigned Users')
-    print('============================================================')
     for user in unassigned_users:
-        print(f'user: {user}, visible_satellites: {user_data[user]['visible_satellites']}')
+        print('============================================================')
+        print(f'user: {user}')
+        for satellite in data['viable_satellites']:
+            for color in colors.keys():
+                color_users = [user for user in colors[color]['users'] if user in satellites[satellite]['viable_users']]
+                conflicts = sum(
+                    is_user_within_10_degrees(sats[satellite], users[user], users[color_user])
+                    for color_user in color_users
+                )
+                print(f'satellite: {satellite}, color: {color}, conflicts: {conflicts}')
+                
 
     return solution
 
