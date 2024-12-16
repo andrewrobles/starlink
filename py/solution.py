@@ -52,11 +52,26 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
             if is_beam_within_45_degrees(users[user], sats[satellite]):
                 for color in colors.keys():
                     color_users = [user for user in colors[color]['users'] if user in satellites[satellite]['viable_users']]
-                    conflicts = sum(
+                    conflict_count = sum(
                         is_user_within_10_degrees(sats[satellite], users[user], users[color_user])
                         for color_user in color_users
                     )
-                    print(f'satellite: {satellite}, color: {color}, conflicts: {conflicts}')
+                    conflict_list = [
+                        color_user for color_user in color_users if is_user_within_10_degrees(sats[satellite], users[user], users[color_user])
+                    ]
+                    reassignment_is_feasible = True
+                    for conflict in conflict_list:
+                        for other_color in colors.keys():
+                            if color == other_color:
+                                continue
+                            other_color_user_list = [other_user for other_user in colors[other_color]['users'] if user in satellites[satellite]['viable_users']]
+                            
+                            if True not in [
+                                is_user_within_10_degrees(sats[satellite], users[conflict], users[other_color_user])
+                                for other_color_user in other_color_user_list
+                            ]:
+                                reassignment_is_feasible = False
+                    print(f'satellite: {satellite}, color: {color}, conflict_count: {conflict_count}, conflicts: {conflict_list}, reassignment_feasible: {reassignment_is_feasible}')
 
     return solution
 
