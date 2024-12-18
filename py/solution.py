@@ -11,8 +11,20 @@ class Satellite:
     def __init__(self, id, vector, users):
         self.id = id
         self.vector = vector
+        self.users = users
         self.viable_users = [user for user in users if is_beam_within_45_degrees(users[user], vector)]
-        self.assigned_users = []
+        self.assignments = []
+
+    def available(self, user, color):
+        return len(self.assignments) < MAX_USERS_PER_SAT and all(
+            not is_user_within_10_degrees(self.vector, self.users[user], self.users[assigned])
+            for assigned in [assignment['user'] for assignment in self.assignments if assignment['color'] == color]
+        )
+
+    def assign(self, user, color):
+        self.assignments.append({ 'user': user, 'color': color })
+
+
 
 def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tuple[Sat, Color]]:
     solution = {}
@@ -47,23 +59,24 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
         }
     
     for satellite_id in sats:
-        potential_users = [user for user in satellites[satellite_id]['viable_users'] if not user_data[user]['assigned']]
+        potential_users = [user for user in Satellite.satellites[satellite_id].viable_users if not user_data[user]['assigned']]
 
         for user in potential_users:
-            # Attempt to assign the user to a color
             for color in colors.keys():
-                # Check interference with all users in the current color bucket
                 color_users = [user for user in colors[color]['users'] if user in satellites[satellite_id]['viable_users']]
-                if all(
-                    not is_user_within_10_degrees(sats[satellite_id], users[user], users[color_user])
-                    for color_user in color_users
-                ) and len(satellites[satellite_id]['assigned_users']) < MAX_USERS_PER_SAT:
-                    # Assign user to satellite and color
+                if Satellite.satellites[satellite_id].available(user, color):
                     solution[user] = (satellite_id, color)
                     colors[color]['users'].append(user)
                     user_data[user]['assigned'] = True
                     satellites[satellite_id]['assigned_users'].append(user)
-                    break  # Stop checking other colors once assigned
+                    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    # NEW IMPLEMENTATION BELOW THIS LINE
+                    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    Satellite.satellites[satellite_id].assign(user, color)
+                    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    # NEW IMPLEMENTATION ABOVE THIS LINE
+                    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    break  
 
     unassigned_users = [user for user, data in user_data.items() if not data['assigned']]
     for user in unassigned_users:
