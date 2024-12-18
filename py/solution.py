@@ -13,8 +13,15 @@ class Satellite:
         self.id = id
         self.vector = satellites[id] 
         self.users = users
-        self.viable_users = [user for user in users if is_beam_within_45_degrees(users[user], self.vector)]
         self.assignments = []
+
+    @property
+    def viable_unassigned_users(self):
+        return [user_id for user_id in self.users if not User.users[user_id].assigned and is_beam_within_45_degrees(self.users[user_id], self.vector)]
+
+    @property
+    def viable_users(self):
+        return [user for user in self.users if is_beam_within_45_degrees(self.users[user], self.vector)]
 
     def available(self, **kwargs):
         if 'user' in kwargs and 'color' in kwargs:
@@ -99,17 +106,16 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                     Satellite.satellites[satellite_id].assign(user_id, color)
                     break  
 
-    unassigned_users = [user_id for user_id in User.users.keys() if not User.users[user_id].assigned]
-    for user_id in unassigned_users:
-        for satellite_id in Satellite.satellites.keys():
-            if is_beam_within_45_degrees(users[user_id], sats[satellite_id]):
-                for color in COLORS:
-                    if Satellite.satellites[satellite_id].available(user=user_id, color=color):
-                        solution[user_id] = (satellite_id, color)
-                        User.users[user_id].assigned = True
-                        Satellite.satellites[satellite_id].assign(user_id, color)
-                        break
+    for satellite_id, satellite in Satellite.satellites.items():
+        for user_id in satellite.viable_unassigned_users:
+            for color in COLORS:
+                if Satellite.satellites[satellite_id].available(user=user_id, color=color):
+                    solution[user_id] = (satellite_id, color)
+                    User.users[user_id].assigned = True
+                    Satellite.satellites[satellite_id].assign(user_id, color)
+                    break
 
+    unassigned_users = [user_id for user_id in User.users.keys() if not User.users[user_id].assigned]
     for user_id in unassigned_users:
         for satellite_id in Satellite.satellites.keys():
             if is_beam_within_45_degrees(users[user_id], sats[satellite_id]):
