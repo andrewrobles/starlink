@@ -45,7 +45,6 @@ class User:
     def __init__(self, id, users):
         self.assigned = False
 
-
 def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tuple[Sat, Color]]:
     solution = {}
 
@@ -61,34 +60,35 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
             'assigned': False,
         }
 
-    for sid in Satellite.satellites.keys():
-        potential_users = [uid for uid in Satellite.satellites[sid].viable_users if not User.users[uid].assigned]
-        for uid in potential_users:
+    for satellite_id in Satellite.satellites.keys():
+        potential_users = [user_id for user_id in Satellite.satellites[satellite_id].viable_users if not User.users[user_id].assigned]
+        for user_id in potential_users:
             for color in COLORS:
-                if Satellite.satellites[sid].available(user=uid, color=color):
-                    solution[uid] = (sid, color)
-                    user_assigned[uid]['assigned'] = True
-                    User.users[uid].assigned = True
-                    Satellite.satellites[sid].assign(uid, color)
+                if Satellite.satellites[satellite_id].available(user=user_id, color=color):
+                    solution[user_id] = (satellite_id, color)
+                    user_assigned[user_id]['assigned'] = True
+                    User.users[user_id].assigned = True
+                    Satellite.satellites[satellite_id].assign(user_id, color)
                     break  
 
 
-    unassigned_users = [user for user, data in user_assigned.items() if not data['assigned']]
-    for user in unassigned_users:
-        for sid in Satellite.satellites.keys():
-            if is_beam_within_45_degrees(users[user], sats[sid]):
+    unassigned_users = [user_id for user_id in User.users.keys() if not User.users[user_id].assigned]
+    for user_id in unassigned_users:
+        for satellite_id in Satellite.satellites.keys():
+            if is_beam_within_45_degrees(users[user_id], sats[satellite_id]):
                 for color in COLORS:
-                    if Satellite.satellites[sid].available(user=user, color=color):
-                        solution[user] = (sid, color)
-                        user_assigned[user]['assigned'] = True
-                        Satellite.satellites[sid].assign(user, color)
+                    if Satellite.satellites[satellite_id].available(user=user_id, color=color):
+                        solution[user_id] = (satellite_id, color)
+                        user_assigned[user_id]['assigned'] = True
+                        User.users[user_id].assigned = True
+                        Satellite.satellites[satellite_id].assign(user_id, color)
                         break
 
     for user in unassigned_users:
-        for sid in Satellite.satellites.keys():
-            if is_beam_within_45_degrees(users[user], sats[sid]):
+        for satellite_id in Satellite.satellites.keys():
+            if is_beam_within_45_degrees(users[user], sats[satellite_id]):
                 for color in COLORS:
-                    conflicts = Satellite.satellites[sid].conflicts(user, color)
+                    conflicts = Satellite.satellites[satellite_id].conflicts(user, color)
                     reassignment_is_feasible = len(conflicts) > 0
                     reassignments = {}
                     for conflict in conflicts:
@@ -97,7 +97,7 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                             if color == other_color:
                                 continue
 
-                            if Satellite.satellites[sid].available(user=conflict, color=other_color):
+                            if Satellite.satellites[satellite_id].available(user=conflict, color=other_color):
                                 reassignments[conflict] = other_color
                                 reassignment_possible = True
                                 break  # Stop checking other colors once a valid reassignment is found
@@ -106,15 +106,15 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                             break  # Stop checking conflicts if one cannot be reassigned
                     if reassignment_is_feasible:
                         for user_to_reassign, color_to_reassign_to in reassignments.items():
-                            if Satellite.satellites[sid].available():
-                                solution[user_to_reassign] = (sid, color_to_reassign_to)
-                                Satellite.satellites[sid].unassign(user_to_reassign)
-                                Satellite.satellites[sid].assign(user_to_reassign, color_to_reassign_to)
+                            if Satellite.satellites[satellite_id].available():
+                                solution[user_to_reassign] = (satellite_id, color_to_reassign_to)
+                                Satellite.satellites[satellite_id].unassign(user_to_reassign)
+                                Satellite.satellites[satellite_id].assign(user_to_reassign, color_to_reassign_to)
 
-                        if Satellite.satellites[sid].available():
-                            solution[user] = (sid, color)
+                        if Satellite.satellites[satellite_id].available():
+                            solution[user] = (satellite_id, color)
                             user_assigned[user]['assigned'] = True
-                            Satellite.satellites[sid].assign(user, color)
+                            Satellite.satellites[satellite_id].assign(user, color)
                       
     return solution
 
