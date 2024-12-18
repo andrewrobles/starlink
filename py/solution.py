@@ -109,14 +109,12 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
 
     return solution
 
-def is_beam_within_45_degrees(user_position, satellite_position):
+def is_beam_within_45_degrees(user, satellite):
     """
     Determines if a satellite's beam serving a user is within 45 degrees of vertical
     from the user's perspective.
     """
-    center = Vector3(0, 0, 0)
-    beam_angle = 180 - user_position.angle_between(center, satellite_position)
-    return beam_angle <= 45
+    return 180 - user.angle_between(Vector3(0, 0, 0), satellite) <= 45
 
 def is_user_within_10_degrees(sat, user1, user2):
     """
