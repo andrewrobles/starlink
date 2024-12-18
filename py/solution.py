@@ -54,6 +54,25 @@ class Satellite:
                 reassignment_is_feasible = False
                 break
         return reassignment_is_feasible 
+    
+    def make_room_for(self, user_id, color):
+        conflicts = self.conflicts(user_id, color)
+        reassignment_is_feasible = len(conflicts) > 0
+        reassignments = {}
+        for conflict in conflicts:
+            reassignment_possible = False
+            for other_color in COLORS:
+                if color == other_color:
+                    continue
+
+                if self.available(user=conflict, color=other_color):
+                    reassignments[conflict] = other_color
+                    reassignment_possible = True
+                    break  # Stop checking other colors once a valid reassignment is found
+            if not reassignment_possible:
+                reassignment_is_feasible = False
+                break  # Stop checking conflicts if one cannot be reassigned
+        return reassignments
 
 class User:
     users = {}
@@ -96,23 +115,8 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
             if is_beam_within_45_degrees(users[user_id], sats[satellite_id]):
                 for color in COLORS:
                     satellite = Satellite.satellites[satellite_id]
-                    conflicts = Satellite.satellites[satellite_id].conflicts(user_id, color)
-                    reassignment_is_feasible = len(conflicts) > 0
-                    reassignments = {}
-                    for conflict in conflicts:
-                        reassignment_possible = False
-                        for other_color in COLORS:
-                            if color == other_color:
-                                continue
-
-                            if Satellite.satellites[satellite_id].available(user=conflict, color=other_color):
-                                reassignments[conflict] = other_color
-                                reassignment_possible = True
-                                break  # Stop checking other colors once a valid reassignment is found
-                        if not reassignment_possible:
-                            reassignment_is_feasible = False
-                            break  # Stop checking conflicts if one cannot be reassigned
                     if satellite.can_make_room_for(user_id, color):
+                        reassignments = satellite.make_room_for(user_id, color)
                         for user_to_reassign, color_to_reassign_to in reassignments.items():
                             if Satellite.satellites[satellite_id].available():
                                 solution[user_to_reassign] = (satellite_id, color_to_reassign_to)
