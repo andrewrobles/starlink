@@ -17,7 +17,8 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
     satellites = {}
     for satellite in sats:
         satellites[satellite] = {
-            'viable_users': [user for user in users if is_beam_within_45_degrees(users[user], sats[satellite])]
+            'viable_users': [user for user in users if is_beam_within_45_degrees(users[user], sats[satellite])],
+            'assigned_users': []
         }
 
     user_data = {}
@@ -42,16 +43,15 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                     solution[user] = (satellite, color)
                     colors[color]['users'].append(user)
                     user_data[user]['assigned'] = True
+                    satellites[satellite]['assigned_users'].append(user)
                     break  # Stop checking other colors once assigned
 
     unassigned_users = [user for user, data in user_data.items() if not data['assigned']]
     for user in unassigned_users:
-        print('============================================================')
-        print(f'user: {user} ({users[user].x}, {users[user].y}, {users[user].z})')
         for satellite in sats:
             if is_beam_within_45_degrees(users[user], sats[satellite]):
                 for color in colors.keys():
-                    color_users = [user for user in colors[color]['users'] if user in satellites[satellite]['viable_users']]
+                    color_users = [user for user in colors[color]['users'] if user in satellites[satellite]['assigned_users']]
                     conflict_count = sum(
                         is_user_within_10_degrees(sats[satellite], users[user], users[color_user])
                         for color_user in color_users
@@ -62,8 +62,8 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                     # DETERMINE IF REASSIGNMENT IS FEASIBLE
                     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                    reassignment_is_feasible = True
-                    reassignment_list = {}
+                    reassignment_is_feasible = len(conflict_list) > 0
+                    reassignments = {}
                     for conflict in conflict_list:
                         reassignment_possible = False
                         for other_color in colors.keys():
@@ -71,25 +71,40 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                                 continue
                             other_color_user_list = [
                                 other_user for other_user in colors[other_color]['users']
-                                if conflict in satellites[satellite]['viable_users']
+                                if conflict in satellites[satellite]['assigned_users']
                             ]
+
                             # Check if conflict can fit in another color bucket without interference
-                            if any(
+                            if all(
                                 not is_user_within_10_degrees(sats[satellite], users[conflict], users[other_color_user])
                                 for other_color_user in other_color_user_list
                             ):
-                                reassignment_list[conflict] = other_color
+                                reassignments[conflict] = other_color
                                 reassignment_possible = True
                                 break  # Stop checking other colors once a valid reassignment is found
                         if not reassignment_possible:
                             reassignment_is_feasible = False
                             break  # Stop checking conflicts if one cannot be reassigned
+                    if reassignment_is_feasible:
+                        for user_to_reassign, color_to_reassign_to in reassignments.items():
+                            prev_color = solution[user_to_reassign][1]
+                            prev_satellite = solution[user_to_reassign][0]
+                            solution[user_to_reassign] = (satellite, color_to_reassign_to)
+                            colors[prev_color]['users'].remove(user_to_reassign)
+                            colors[color_to_reassign_to]['users'].append(user_to_reassign)
 
-                    print(
-                        f'satellite: {satellite}, color: {color}, conflict_count: {conflict_count}, '
-                        f'conflicts: {conflict_list}, {"reassignment is feasible!" if reassignment_is_feasible else ""}'
-                        f', reassignment_list: {reassignment_list}'
-                    )
+                        solution[user] = (satellite, color)
+                        colors[color]['users'].append(user)
+                        user_data[user]['assigned'] = True
+                        satellites[satellite]['assigned_users'].append(user) 
+                      
+                    else:
+                        if conflict_count == 0:
+                            solution[user] = (satellite, color)
+                            colors[color]['users'].append(user)
+                            user_data[user]['assigned'] = True
+                            satellites[satellite]['assigned_users'].append(user) 
+
     
 
     return solution
