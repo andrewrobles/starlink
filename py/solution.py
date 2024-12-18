@@ -14,13 +14,13 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
     for user_id in users:
         User.users[user_id] = User(user_id, users)
 
-    for satellite_id in Satellite.satellites.keys():
-        for user_id in Satellite.satellites[satellite_id].viable_users:
+    for satellite_id, satellite in Satellite.satellites.items():
+        for user_id in satellite.viable_users:
             for color in COLORS:
-                if Satellite.satellites[satellite_id].available(user=user_id, color=color):
+                if satellite.available(user=user_id, color=color):
                     solution[user_id] = (satellite_id, color)
                     User.users[user_id].assigned = True
-                    Satellite.satellites[satellite_id].assign(user_id, color)
+                    satellite.assign(user_id, color)
                     break  
 
     for satellite_id, satellite in Satellite.satellites.items():
@@ -29,7 +29,7 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                 if Satellite.satellites[satellite_id].available(user=user_id, color=color):
                     solution[user_id] = (satellite_id, color)
                     User.users[user_id].assigned = True
-                    Satellite.satellites[satellite_id].assign(user_id, color)
+                    satellite.assign(user_id, color)
                     break
 
     for satellite_id, satellite in Satellite.satellites.items():
@@ -38,19 +38,20 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                 if satellite.can_make_room_for(user_id, color):
                     reassignments = satellite.make_room_for(user_id, color)
                     for user_to_reassign, color_to_reassign_to in reassignments.items():
-                        if Satellite.satellites[satellite_id].available():
+                        if satellite.available():
                             solution[user_to_reassign] = (satellite_id, color_to_reassign_to)
-                            Satellite.satellites[satellite_id].unassign(user_to_reassign)
-                            Satellite.satellites[satellite_id].assign(user_to_reassign, color_to_reassign_to)
+                            satellite.unassign(user_to_reassign)
+                            satellite.assign(user_to_reassign, color_to_reassign_to)
 
-                    if Satellite.satellites[satellite_id].available():
+                    if satellite.available():
                         solution[user_id] = (satellite_id, color)
                         User.users[user_id].assigned = True
-                        Satellite.satellites[satellite_id].assign(user_id, color)
+                        satellite.assign(user_id, color)
                       
     return solution
 
 MAX_USERS_PER_SAT = 32
+MIN_BEAM_INTERFERENCE = 10
 
 class Satellite:
     satellites = {}
@@ -133,7 +134,7 @@ class Satellite:
         if vec1.mag() == 0 or vec2.mag() == 0:
             return False
 
-        return satellite.angle_between(user_1, user_2) < 10
+        return satellite.angle_between(user_1, user_2) < MIN_BEAM_INTERFERENCE 
 
 class User:
     users = {}
