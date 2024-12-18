@@ -43,21 +43,8 @@ class Satellite:
 def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tuple[Sat, Color]]:
     solution = {}
 
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # NEW IMPLEMENTATION BELOW THIS LINE
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     for satellite in sats:
         Satellite.satellites[satellite] = Satellite(satellite, sats[satellite], users)
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # NEW IMPLEMENTATION ABOVE THIS LINE
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    satellites = {}
-    for satellite in sats:
-        satellites[satellite] = {
-            'viable_users': [user for user in users if is_beam_within_45_degrees(users[user], sats[satellite])],
-            'assigned_users': []
-        }
 
     user_data = {}
     for user in users:
@@ -73,25 +60,21 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                 if Satellite.satellites[satellite_id].available(user=user, color=color):
                     solution[user] = (satellite_id, color)
                     user_data[user]['assigned'] = True
-                    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                    # NEW IMPLEMENTATION BELOW THIS LINE
-                    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                     Satellite.satellites[satellite_id].assign(user, color)
-                    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                    # NEW IMPLEMENTATION ABOVE THIS LINE
-                    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                     break  
 
     unassigned_users = [user for user, data in user_data.items() if not data['assigned']]
     for user in unassigned_users:
         for satellite_id in sats:
-            
             if is_beam_within_45_degrees(users[user], sats[satellite_id]):
                 for color in COLORS:
+                    if Satellite.satellites[satellite_id].available(user=user, color=color):
+                        solution[user] = (satellite_id, color)
+                        user_data[user]['assigned'] = True
+                        Satellite.satellites[satellite_id].assign(user, color)
+                        break
+
                     conflicts = Satellite.satellites[satellite_id].conflicts(user, color)
-                    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                    # DETERMINE IF REASSIGNMENT IS FEASIBLE
-                    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                     reassignment_is_feasible = len(conflicts) > 0
                     reassignments = {}
                     for conflict in conflicts:
@@ -110,44 +93,15 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                     if reassignment_is_feasible:
                         for user_to_reassign, color_to_reassign_to in reassignments.items():
                             if Satellite.satellites[satellite_id].available():
-                                prev_color = solution[user_to_reassign][1]
-                                prev_satellite = solution[user_to_reassign][0]
-
                                 solution[user_to_reassign] = (satellite_id, color_to_reassign_to)
-
-                                # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                                # NEW IMPLEMENTATION BELOW THIS LINE
-                                # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                                 Satellite.satellites[satellite_id].unassign(user_to_reassign)
                                 Satellite.satellites[satellite_id].assign(user_to_reassign, color_to_reassign_to)
-                                # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                                # NEW IMPLEMENTATION ABOVE THIS LINE
-                                # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
                         if Satellite.satellites[satellite_id].available():
                             solution[user] = (satellite_id, color)
                             user_data[user]['assigned'] = True
-                            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                            # NEW IMPLEMENTATION BELOW THIS LINE
-                            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                             Satellite.satellites[satellite_id].assign(user, color)
-                            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                            # NEW IMPLEMENTATION BELOW THIS LINE
-                            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
                       
-                    else:
-                        if len(conflicts) == 0 and Satellite.satellites[satellite_id].available():
-                            solution[user] = (satellite_id, color)
-                            user_data[user]['assigned'] = True
-                            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                            # NEW IMPLEMENTATION BELOW THIS LINE
-                            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                            Satellite.satellites[satellite_id].assign(user, color)
-                            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                            # NEW IMPLEMENTATION BELOW THIS LINE
-                            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
     return solution
 
 def is_beam_within_45_degrees(user, satellite):
