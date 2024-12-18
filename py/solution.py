@@ -138,7 +138,11 @@ def is_user_within_10_degrees(sat, user1, user2):
     # Calculate the magnitudes of the vectors
     magnitude1 = vec1.mag()
     magnitude2 = vec2.mag()
-    
+
+    # Avoid division by zero
+    if magnitude1 == 0 or magnitude2 == 0:
+        return False
+
     # Calculate the cosine of the angle between the vectors
     cos_theta = dot_product / (magnitude1 * magnitude2)
     
