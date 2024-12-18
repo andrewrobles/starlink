@@ -4,6 +4,7 @@ from util import Color, Sat, User, Vector3
 import math
 
 MAX_USERS_PER_SAT = 32
+COLORS = [Color.A, Color.B, Color.C, Color.D]
 
 class Satellite:
     satellites = {}
@@ -39,13 +40,6 @@ class Satellite:
 def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tuple[Sat, Color]]:
     solution = {}
 
-    colors = {}
-    for color in [Color.A, Color.B, Color.C, Color.D]:
-        colors[color] = {
-            'users': []
-        }
-
-
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # NEW IMPLEMENTATION BELOW THIS LINE
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -72,11 +66,9 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
         potential_users = [user for user in Satellite.satellites[satellite_id].viable_users if not user_data[user]['assigned']]
 
         for user in potential_users:
-            for color in colors.keys():
-                color_users = [user for user in colors[color]['users'] if user in satellites[satellite_id]['viable_users']]
+            for color in COLORS:
                 if Satellite.satellites[satellite_id].available(user, color):
                     solution[user] = (satellite_id, color)
-                    colors[color]['users'].append(user)
                     user_data[user]['assigned'] = True
                     satellites[satellite_id]['assigned_users'].append(user)
                     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -93,7 +85,7 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
         for satellite_id in sats:
             
             if is_beam_within_45_degrees(users[user], sats[satellite_id]):
-                for color in colors.keys():
+                for color in COLORS:
                     conflicts = Satellite.satellites[satellite_id].conflicts(user, color)
                     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                     # DETERMINE IF REASSIGNMENT IS FEASIBLE
@@ -102,7 +94,7 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                     reassignments = {}
                     for conflict in conflicts:
                         reassignment_possible = False
-                        for other_color in colors.keys():
+                        for other_color in COLORS:
                             if color == other_color:
                                 continue
 
@@ -118,10 +110,8 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                             if len(satellites[satellite_id]['assigned_users']) < MAX_USERS_PER_SAT:
                                 prev_color = solution[user_to_reassign][1]
                                 prev_satellite = solution[user_to_reassign][0]
-                                colors[prev_color]['users'].remove(user_to_reassign)
 
                                 solution[user_to_reassign] = (satellite_id, color_to_reassign_to)
-                                colors[color_to_reassign_to]['users'].append(user_to_reassign)
 
                                 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                                 # NEW IMPLEMENTATION BELOW THIS LINE
@@ -134,7 +124,6 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
 
                         if len(satellites[satellite_id]['assigned_users']) < MAX_USERS_PER_SAT:
                             solution[user] = (satellite_id, color)
-                            colors[color]['users'].append(user)
                             user_data[user]['assigned'] = True
                             satellites[satellite_id]['assigned_users'].append(user) 
                             # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -149,7 +138,6 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                     else:
                         if len(conflicts) == 0 and len(satellites[satellite_id]['assigned_users']) < MAX_USERS_PER_SAT:
                             solution[user] = (satellite_id, color)
-                            colors[color]['users'].append(user)
                             user_data[user]['assigned'] = True
                             satellites[satellite_id]['assigned_users'].append(user) 
                             # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
