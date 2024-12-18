@@ -47,7 +47,7 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
     unassigned_users = [user for user, data in user_data.items() if not data['assigned']]
     for user in unassigned_users:
         print('============================================================')
-        print(f'user: {user}')
+        print(f'user: {user} ({users[user].x}, {users[user].y}, {users[user].z})')
         for satellite in sats:
             if is_beam_within_45_degrees(users[user], sats[satellite]):
                 for color in colors.keys():
@@ -90,8 +90,7 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                         f'conflicts: {conflict_list}, {"reassignment is feasible!" if reassignment_is_feasible else ""}'
                         f', reassignment_list: {reassignment_list}'
                     )
-
-                    if reassignment_is_feasible:
+    
 
     return solution
 
