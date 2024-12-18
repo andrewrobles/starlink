@@ -39,12 +39,21 @@ class Satellite:
             if assignment['user'] == user:
                 self.assignments.pop(index)
 
+class User:
+    users = {}
+
+    def __init__(self, id, users):
+        self.assigned = False
+
 
 def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tuple[Sat, Color]]:
     solution = {}
 
     for id in sats:
         Satellite.satellites[id] = Satellite(id, sats, users)
+
+    for id in users:
+        User.users[id] = User(id, users)
 
     user_assigned = {}
     for user in users:
@@ -53,13 +62,14 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
         }
 
     for sid in Satellite.satellites.keys():
-        potential_users = [user for user in Satellite.satellites[sid].viable_users if not user_assigned[user]['assigned']]
-        for user in potential_users:
+        potential_users = [uid for uid in Satellite.satellites[sid].viable_users if not User.users[uid].assigned]
+        for uid in potential_users:
             for color in COLORS:
-                if Satellite.satellites[sid].available(user=user, color=color):
-                    solution[user] = (sid, color)
-                    user_assigned[user]['assigned'] = True
-                    Satellite.satellites[sid].assign(user, color)
+                if Satellite.satellites[sid].available(user=uid, color=color):
+                    solution[uid] = (sid, color)
+                    user_assigned[uid]['assigned'] = True
+                    User.users[uid].assigned = True
+                    Satellite.satellites[sid].assign(uid, color)
                     break  
 
 
