@@ -17,9 +17,15 @@ class Satellite:
 
     def available(self, user, color):
         return len(self.assignments) < MAX_USERS_PER_SAT and all(
-            not is_user_within_10_degrees(self.vector, self.users[user], self.users[assigned])
-            for assigned in [assignment['user'] for assignment in self.assignments if assignment['color'] == color]
+            not is_user_within_10_degrees(self.vector, self.users[user], self.users[assignment['user']])
+            for assignment in self.assignments if assignment['color'] == color
         )
+
+    def conflicts(self, user, color):
+        return [
+            assignment['user'] for assignment in self.assignments
+            if assignment['color'] == color and is_user_within_10_degrees(self.vector, self.users[user], self.users[assignment['user']])
+        ]
 
     def assign(self, user, color):
         self.assignments.append({ 'user': user, 'color': color })
@@ -88,20 +94,13 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
             
             if is_beam_within_45_degrees(users[user], sats[satellite_id]):
                 for color in colors.keys():
-                    color_users = [user for user in colors[color]['users'] if user in satellites[satellite_id]['assigned_users']]
-                    conflict_count = sum(
-                        is_user_within_10_degrees(sats[satellite_id], users[user], users[color_user])
-                        for color_user in color_users
-                    )
-                    conflict_list = [
-                        color_user for color_user in color_users if is_user_within_10_degrees(sats[satellite_id], users[user], users[color_user])
-                    ]
+                    conflicts = Satellite.satellites[satellite_id].conflicts(user, color)
                     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                     # DETERMINE IF REASSIGNMENT IS FEASIBLE
                     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                    reassignment_is_feasible = len(conflict_list) > 0
+                    reassignment_is_feasible = len(conflicts) > 0
                     reassignments = {}
-                    for conflict in conflict_list:
+                    for conflict in conflicts:
                         reassignment_possible = False
                         for other_color in colors.keys():
                             if color == other_color:
@@ -148,7 +147,7 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
 
                       
                     else:
-                        if conflict_count == 0 and len(satellites[satellite_id]['assigned_users']) < MAX_USERS_PER_SAT:
+                        if len(conflicts) == 0 and len(satellites[satellite_id]['assigned_users']) < MAX_USERS_PER_SAT:
                             solution[user] = (satellite_id, color)
                             colors[color]['users'].append(user)
                             user_data[user]['assigned'] = True
