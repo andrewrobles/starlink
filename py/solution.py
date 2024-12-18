@@ -113,40 +113,27 @@ def is_beam_within_45_degrees(user, satellite):
     """
     Determines if a satellite's beam serving a user is within 45 degrees of vertical
     from the user's perspective.
+
+    Args:
+        satellite (Vector3): The satellite position.
+        user (Vector3): Position of the user.
+
+    Returns:
+        bool: True if the angle is within 45 degrees, inclusively, False otherwise.
     """
     return 180 - user.angle_between(Vector3(0, 0, 0), satellite) <= 45
 
-def is_user_within_10_degrees(sat, user1, user2):
+def is_user_within_10_degrees(satellite, user_1, user_2):
     """
     Determines if the angle between the beams from the satellite to two users is within 10 degrees.
 
     Args:
-        sat (Vector3): The satellite position.
-        user1 (Vector3): Position of the first user.
-        user2 (Vector3): Position of the second user.
+        satellite (Vector3): The satellite position.
+        user_1 (Vector3): Position of the first user.
+        user_2 (Vector3): Position of the second user.
 
     Returns:
-        bool: True if the angle is within 10 degrees, False otherwise.
+        bool: True if the angle is within 10 degrees, exclusively, False otherwise.
     """
-    # Calculate the vectors from the satellite to each user
-    vec1 = user1 - sat 
-    vec2 = user2 - sat 
-    
-    # Calculate the dot product of the vectors
-    dot_product = vec1.dot(vec2)
-    
-    # Calculate the magnitudes of the vectors
-    magnitude1 = vec1.mag()
-    magnitude2 = vec2.mag()
-    
-    # Calculate the cosine of the angle between the vectors
-    cos_theta = dot_product / (magnitude1 * magnitude2)
-    
-    # Clamp cos_theta to account for floating-point precision issues
-    cos_theta = max(min(cos_theta, 1.0), -1.0)
-    
-    # Calculate the angle in degrees
-    angle_in_degrees = math.degrees(math.acos(cos_theta))
-    
-    # Return True if the angle is within 10 degrees
-    return angle_in_degrees <= 10
+    return satellite.angle_between(user_1, user_2) < 10
+
