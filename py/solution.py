@@ -12,7 +12,7 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
         Satellite.satellites[satellite_id] = Satellite(satellite_id, sats, users)
 
     for user_id in users:
-        User.users[user_id] = User(user_id, users)
+        User.users[user_id] = User(user_id)
 
     for satellite_id, satellite in Satellite.satellites.items():
         for user_id in satellite.viable_users:
@@ -41,6 +41,12 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
 
 MAX_USERS_PER_SAT = 32
 MIN_BEAM_INTERFERENCE = 10
+
+class User:
+    users = {}
+
+    def __init__(self, id):
+        self.assigned = False
 
 class Satellite:
     satellites = {}
@@ -125,9 +131,4 @@ class Satellite:
 
         return satellite.angle_between(user_1, user_2) < MIN_BEAM_INTERFERENCE 
 
-class User:
-    users = {}
-
-    def __init__(self, id, users):
-        self.assigned = False
 
