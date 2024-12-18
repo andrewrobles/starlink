@@ -124,10 +124,6 @@ def is_beam_within_45_degrees(user_position, satellite_position):
     user_magnitude = user_position.mag()
     satellite_magnitude = user_to_satellite.mag()
     
-    # Avoid division by zero
-    if user_magnitude == 0 or satellite_magnitude == 0:
-        return False
-    
     # Calculate the cosine of the angle
     cos_theta = dot_product / (user_magnitude * satellite_magnitude)
     
@@ -164,10 +160,6 @@ def is_user_within_10_degrees(sat, user1, user2):
     magnitude1 = vec1.mag()
     magnitude2 = vec2.mag()
     
-    # Avoid division by zero
-    if magnitude1 == 0 or magnitude2 == 0:
-        return False
-
     # Calculate the cosine of the angle between the vectors
     cos_theta = dot_product / (magnitude1 * magnitude2)
     
