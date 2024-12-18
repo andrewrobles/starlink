@@ -33,11 +33,9 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                             solution[user_to_reassign] = (satellite_id, color_to_reassign_to)
                             satellite.unassign(user_to_reassign)
                             satellite.assign(user_to_reassign, color_to_reassign_to)
-
-                    if satellite.available():
-                        solution[user_id] = (satellite_id, color)
-                        User.users[user_id].assigned = True
-                        satellite.assign(user_id, color)
+                    solution[user_id] = (satellite_id, color)
+                    User.users[user_id].assigned = True
+                    satellite.assign(user_id, color)
                       
     return solution
 
@@ -109,10 +107,10 @@ class Satellite:
                 if self.available(user=conflict, color=other_color):
                     reassignments[conflict] = other_color
                     reassignment_possible = True
-                    break  # Stop checking other colors once a valid reassignment is found
+                    break  
             if not reassignment_possible:
                 reassignment_is_feasible = False
-                break  # Stop checking conflicts if one cannot be reassigned
+                break  
         return reassignments
 
     def is_beam_within_45_degrees(self, user, satellite):
