@@ -114,28 +114,9 @@ def is_beam_within_45_degrees(user_position, satellite_position):
     Determines if a satellite's beam serving a user is within 45 degrees of vertical
     from the user's perspective.
     """
-    # Calculate the vector from the user to the satellite
-    user_to_satellite = satellite_position - user_position
-    
-    # Calculate the dot product of user_position and user_to_satellite
-    dot_product = user_position.dot(user_to_satellite)
-    
-    # Calculate magnitudes of the vectors
-    user_magnitude = user_position.mag()
-    satellite_magnitude = user_to_satellite.mag()
-    
-    # Calculate the cosine of the angle
-    cos_theta = dot_product / (user_magnitude * satellite_magnitude)
-    
-    # Clamp the value to account for floating-point precision issues
-    cos_theta = max(min(cos_theta, 1.0), -1.0)
-    
-    # Define a small epsilon for floating-point comparison
-    epsilon = 1e-9
-    threshold = math.sqrt(2) / 2
-    
-    # Check if cos_theta is within the threshold, allowing for small tolerance
-    return cos_theta >= threshold - epsilon
+    center = Vector3(0, 0, 0)
+    beam_angle = 180 - user_position.angle_between(center, satellite_position)
+    return beam_angle <= 45
 
 def is_user_within_10_degrees(sat, user1, user2):
     """
