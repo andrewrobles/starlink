@@ -24,6 +24,10 @@ class Satellite:
     def assign(self, user, color):
         self.assignments.append({ 'user': user, 'color': color })
 
+    def unassign(self, user):
+        for index, assignment in enumerate(self.assignments):
+            if assignment['user'] == user:
+                self.assignments.pop(index)
 
 
 def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tuple[Sat, Color]]:
@@ -80,16 +84,17 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
 
     unassigned_users = [user for user, data in user_data.items() if not data['assigned']]
     for user in unassigned_users:
-        for satellite in sats:
-            if is_beam_within_45_degrees(users[user], sats[satellite]):
+        for satellite_id in sats:
+            
+            if is_beam_within_45_degrees(users[user], sats[satellite_id]):
                 for color in colors.keys():
-                    color_users = [user for user in colors[color]['users'] if user in satellites[satellite]['assigned_users']]
+                    color_users = [user for user in colors[color]['users'] if user in satellites[satellite_id]['assigned_users']]
                     conflict_count = sum(
-                        is_user_within_10_degrees(sats[satellite], users[user], users[color_user])
+                        is_user_within_10_degrees(sats[satellite_id], users[user], users[color_user])
                         for color_user in color_users
                     )
                     conflict_list = [
-                        color_user for color_user in color_users if is_user_within_10_degrees(sats[satellite], users[user], users[color_user])
+                        color_user for color_user in color_users if is_user_within_10_degrees(sats[satellite_id], users[user], users[color_user])
                     ]
                     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                     # DETERMINE IF REASSIGNMENT IS FEASIBLE
@@ -101,16 +106,8 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                         for other_color in colors.keys():
                             if color == other_color:
                                 continue
-                            other_color_user_list = [
-                                other_user for other_user in colors[other_color]['users']
-                                if conflict in satellites[satellite]['assigned_users']
-                            ]
 
-                            # Check if conflict can fit in another color bucket without interference
-                            if all(
-                                not is_user_within_10_degrees(sats[satellite], users[conflict], users[other_color_user])
-                                for other_color_user in other_color_user_list
-                            ):
+                            if Satellite.satellites[satellite_id].available(conflict, other_color):
                                 reassignments[conflict] = other_color
                                 reassignment_possible = True
                                 break  # Stop checking other colors once a valid reassignment is found
@@ -119,26 +116,50 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                             break  # Stop checking conflicts if one cannot be reassigned
                     if reassignment_is_feasible:
                         for user_to_reassign, color_to_reassign_to in reassignments.items():
-                            if len(satellites[satellite]['assigned_users']) < MAX_USERS_PER_SAT:
+                            if len(satellites[satellite_id]['assigned_users']) < MAX_USERS_PER_SAT:
                                 prev_color = solution[user_to_reassign][1]
                                 prev_satellite = solution[user_to_reassign][0]
                                 colors[prev_color]['users'].remove(user_to_reassign)
 
-                                solution[user_to_reassign] = (satellite, color_to_reassign_to)
+                                solution[user_to_reassign] = (satellite_id, color_to_reassign_to)
                                 colors[color_to_reassign_to]['users'].append(user_to_reassign)
 
-                        if len(satellites[satellite]['assigned_users']) < MAX_USERS_PER_SAT:
-                            solution[user] = (satellite, color)
+                                # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                # NEW IMPLEMENTATION BELOW THIS LINE
+                                # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                Satellite.satellites[satellite_id].unassign(user_to_reassign)
+                                Satellite.satellites[satellite_id].assign(user_to_reassign, color_to_reassign_to)
+                                # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                # NEW IMPLEMENTATION ABOVE THIS LINE
+                                # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+                        if len(satellites[satellite_id]['assigned_users']) < MAX_USERS_PER_SAT:
+                            solution[user] = (satellite_id, color)
                             colors[color]['users'].append(user)
                             user_data[user]['assigned'] = True
-                            satellites[satellite]['assigned_users'].append(user) 
+                            satellites[satellite_id]['assigned_users'].append(user) 
+                            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                            # NEW IMPLEMENTATION BELOW THIS LINE
+                            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                            Satellite.satellites[satellite_id].assign(user, color)
+                            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                            # NEW IMPLEMENTATION BELOW THIS LINE
+                            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
                       
                     else:
-                        if conflict_count == 0 and len(satellites[satellite]['assigned_users']) < MAX_USERS_PER_SAT:
-                            solution[user] = (satellite, color)
+                        if conflict_count == 0 and len(satellites[satellite_id]['assigned_users']) < MAX_USERS_PER_SAT:
+                            solution[user] = (satellite_id, color)
                             colors[color]['users'].append(user)
                             user_data[user]['assigned'] = True
-                            satellites[satellite]['assigned_users'].append(user) 
+                            satellites[satellite_id]['assigned_users'].append(user) 
+                            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                            # NEW IMPLEMENTATION BELOW THIS LINE
+                            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                            Satellite.satellites[satellite_id].assign(user, color)
+                            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                            # NEW IMPLEMENTATION BELOW THIS LINE
+                            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     return solution
 
