@@ -63,6 +63,7 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                     # DETERMINE IF REASSIGNMENT IS FEASIBLE
                     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                     reassignment_is_feasible = True
+                    reassignment_list = {}
                     for conflict in conflict_list:
                         reassignment_possible = False
                         for other_color in colors.keys():
@@ -77,6 +78,7 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                                 not is_user_within_10_degrees(sats[satellite], users[conflict], users[other_color_user])
                                 for other_color_user in other_color_user_list
                             ):
+                                reassignment_list[conflict] = other_color
                                 reassignment_possible = True
                                 break  # Stop checking other colors once a valid reassignment is found
                         if not reassignment_possible:
@@ -86,7 +88,11 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                     print(
                         f'satellite: {satellite}, color: {color}, conflict_count: {conflict_count}, '
                         f'conflicts: {conflict_list}, {"reassignment is feasible!" if reassignment_is_feasible else ""}'
+                        f', reassignment_list: {reassignment_list}'
                     )
+
+                    if reassignment_is_feasible:
+
     return solution
 
 def is_beam_within_45_degrees(user_position, satellite_position):
