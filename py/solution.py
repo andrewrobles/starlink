@@ -39,6 +39,22 @@ class Satellite:
             if assignment['user'] == user:
                 self.assignments.pop(index)
 
+    def can_make_room_for(self, user_id, color):
+        conflicts = self.conflicts(user_id, color)
+        reassignment_is_feasible = len(conflicts) > 0
+        for conflict in conflicts:
+            reassignment_possible = False
+            for other_color in COLORS:
+                if color == other_color:
+                    continue
+                if self.available(user=conflict, color=other_color):
+                    reassignment_possible = True
+                    break
+            if not reassignment_possible:
+                reassignment_is_feasible = False
+                break
+        return reassignment_is_feasible 
+
 class User:
     users = {}
 
@@ -79,6 +95,7 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
         for satellite_id in Satellite.satellites.keys():
             if is_beam_within_45_degrees(users[user_id], sats[satellite_id]):
                 for color in COLORS:
+                    satellite = Satellite.satellites[satellite_id]
                     conflicts = Satellite.satellites[satellite_id].conflicts(user_id, color)
                     reassignment_is_feasible = len(conflicts) > 0
                     reassignments = {}
@@ -95,7 +112,7 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                         if not reassignment_possible:
                             reassignment_is_feasible = False
                             break  # Stop checking conflicts if one cannot be reassigned
-                    if reassignment_is_feasible:
+                    if satellite.can_make_room_for(user_id, color):
                         for user_to_reassign, color_to_reassign_to in reassignments.items():
                             if Satellite.satellites[satellite_id].available():
                                 solution[user_to_reassign] = (satellite_id, color_to_reassign_to)
