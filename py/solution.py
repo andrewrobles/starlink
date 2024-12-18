@@ -9,11 +9,11 @@ COLORS = [Color.A, Color.B, Color.C, Color.D]
 class Satellite:
     satellites = {}
 
-    def __init__(self, sid, vector, users):
+    def __init__(self, id, satellites, users):
         self.id = id
-        self.vector = vector
+        self.vector = satellites[id] 
         self.users = users
-        self.viable_users = [user for user in users if is_beam_within_45_degrees(users[user], vector)]
+        self.viable_users = [user for user in users if is_beam_within_45_degrees(users[user], self.vector)]
         self.assignments = []
 
     def available(self, **kwargs):
@@ -43,8 +43,8 @@ class Satellite:
 def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tuple[Sat, Color]]:
     solution = {}
 
-    for sid in sats:
-        Satellite.satellites[sid] = Satellite(sid, sats[sid], users)
+    for id in sats:
+        Satellite.satellites[id] = Satellite(id, sats, users)
 
     user_assigned = {}
     for user in users:
