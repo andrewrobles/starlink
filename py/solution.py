@@ -22,7 +22,7 @@ def solve(users: Dict[UserID, Vector3], sats: Dict[SatelliteId, Vector3]) -> Dic
         Satellite.satellites[satellite_id] = Satellite(satellite_id, satellite_vector)
 
     for satellite in Satellite.satellites.values():
-        for user_id in satellite.viable_users:
+        for user_id in satellite.available_users:
             for color in COLORS:
                 if satellite.available(user_id=user_id, color=color):
                     satellite.assign(user_id, color)
@@ -30,7 +30,7 @@ def solve(users: Dict[UserID, Vector3], sats: Dict[SatelliteId, Vector3]) -> Dic
                     break  
 
     for satellite in Satellite.satellites.values():
-        for user_id in satellite.viable_users:
+        for user_id in satellite.available_users:
             for color in COLORS:
                 if satellite.can_make_room_for(user_id, color):
                     reassignments = satellite.make_room_for(user_id, color)
@@ -58,14 +58,16 @@ class Satellite:
         self.id = id
         self.vector = vector 
         self.assignments = []
+        self.visible_users = [
+            user_id for user_id, user in User.users.items()
+            if self._is_beam_within_45_degrees(user.vector, self.vector)
+        ]
 
     @property
-    def viable_users(self) -> List[UserID]:
-        # TODO: optimize this function by only computing beams within 45 degrees once then filtering out the users that are assigned
+    def available_users(self) -> List[UserID]:
         return [
-            user_id for user_id in User.users
+            user_id for user_id in self.visible_users
             if not User.users[user_id].assigned
-            and self._is_beam_within_45_degrees(User.users[user_id].vector, self.vector)
         ]
 
     def available(self, **kwargs) -> bool:
