@@ -13,14 +13,14 @@ def solve(users: Dict[UserID, Vector3], sats: Dict[SatelliteId, Vector3]) -> Dic
 
     Database.load(users, sats)
 
-    for satellite_id, satellite in Database.satellites.items():
+    for satellite in Database.satellites.values():
         for user_id in satellite.viable_users:
             for color in COLORS:
                 if satellite.available(user_id=user_id, color=color):
                     satellite.assign(user_id, color)
                     break  
 
-    for satellite_id, satellite in Database.satellites.items():
+    for satellite in Database.satellites.values():
         for user_id in satellite.viable_users:
             for color in COLORS:
                 if satellite.can_make_room_for(user_id, color):
