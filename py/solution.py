@@ -48,6 +48,7 @@ class User:
         self.id = id
         self.assigned = False
         self.vector = vector
+        self.color = None
 
 class Satellite:
     def __init__(self, id: Sat, vector: Vector3):
@@ -69,9 +70,9 @@ class Satellite:
             not self._is_user_within_10_degrees(
                 self.vector,
                 Database.users[kwargs['user']].vector,
-                Database.users[assignment['user']].vector
+                Database.users[user_id].vector
             )
-            for assignment in self.assignments if assignment['color'] == kwargs['color']
+            for user_id in self.assignments if Database.users[user_id].color == kwargs['color']
         )
 
         return len(self.assignments) < MAX_USERS_PER_SAT
@@ -81,9 +82,11 @@ class Satellite:
         self.assign(user_id, color)
 
     def assign(self, user_id: User, color: Color):
-        Database.users[user_id].assigned = True
+        user = Database.users[user_id]
+        user.assigned = True
+        user.color = color
         Database.solution[user_id] = (self.id, color)
-        self.assignments.append({ 'user': user_id, 'color': color })
+        self.assignments.append(user_id)
 
     def can_make_room_for(self, user_id: User, color: Color):
         conflicts = self._conflicts(user_id, color)
@@ -126,15 +129,15 @@ class Satellite:
 
     def _conflicts(self, user_id: User, color: Color):
         return [
-            assignment['user'] for assignment in self.assignments
-            if assignment['color'] == color and self._is_user_within_10_degrees(
+            id for id in self.assignments
+            if Database.users[id].color == color and self._is_user_within_10_degrees(
                 self.vector,
                 Database.users[user_id].vector,
-                Database.users[assignment['user']].vector
+                Database.users[id].vector
             )
         ]
 
     def _unassign(self, user_id: User):
-        for index, assignment in enumerate(self.assignments):
-            if assignment['user'] == user_id:
+        for index, id in enumerate(self.assignments):
+            if id == user_id:
                 self.assignments.pop(index)
