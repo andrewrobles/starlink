@@ -8,7 +8,7 @@ COLORS = [Color.A, Color.B, Color.C, Color.D]
 
 def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tuple[Sat, Color]]:
 
-    Database(users, sats)
+    Database.load(users, sats)
 
     for satellite_id, satellite in Database.satellites.items():
         for user_id in satellite.viable_users:
@@ -33,7 +33,8 @@ class Database:
     satellites = {}
     solution = {}
 
-    def __init__(self, users: Dict[User, Vector3], sats: Dict[Sat, Vector3]):
+    @classmethod
+    def load(self, users: Dict[User, Vector3], sats: Dict[Sat, Vector3]):
         for user_id in users:
             user_vector = users[user_id]
             Database.users[user_id] = User(user_id, user_vector)
