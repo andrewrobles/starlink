@@ -1,8 +1,9 @@
 from typing import Dict, List, Tuple
 
 from util import Color, Sat, User, Vector3
-import math
 
+MAX_USERS_PER_SAT = 32
+MIN_BEAM_INTERFERENCE = 10
 COLORS = [Color.A, Color.B, Color.C, Color.D]
 
 def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tuple[Sat, Color]]:
@@ -27,9 +28,6 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                       
     return Database.solution
 
-MAX_USERS_PER_SAT = 32
-MIN_BEAM_INTERFERENCE = 10
-
 class Database:
     users = {}
     satellites = {}
@@ -43,7 +41,6 @@ class Database:
         for satellite_id in sats:
             satellite_vector = sats[satellite_id]
             Database.satellites[satellite_id] = Satellite(satellite_id, satellite_vector)
-
 
 class User:
     def __init__(self, id, vector):
