@@ -101,22 +101,14 @@ class Satellite:
         return reassignment_is_feasible 
     
     def make_room_for(self, user_id: User, color: Color):
-        conflicts = self._conflicts(user_id, color)
-        reassignment_is_feasible = len(conflicts) > 0
         reassignments = {}
-        for conflict in conflicts:
-            reassignment_possible = False
+        for conflict in self._conflicts(user_id, color):
             for other_color in COLORS:
                 if color == other_color:
                     continue
-
                 if self.available(user=conflict, color=other_color):
                     reassignments[conflict] = other_color
-                    reassignment_possible = True
                     break  
-            if not reassignment_possible:
-                reassignment_is_feasible = False
-                break  
         return reassignments
 
     def _is_beam_within_45_degrees(self, user: Vector3, satellite: Vector3):
