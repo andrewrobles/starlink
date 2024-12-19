@@ -9,6 +9,8 @@ COLORS = [Color.A, Color.B, Color.C, Color.D]
 UserID = User
 SatelliteId = Sat
 
+# TODO: Write docstrings
+
 def solve(users: Dict[UserID, Vector3], sats: Dict[SatelliteId, Vector3]) -> Dict[UserID, Tuple[SatelliteId, Color]]:
 
     solution = {}
@@ -92,18 +94,14 @@ class Satellite:
         self.assign(user_id, color)
 
     def can_make_room_for(self, user_id: User, color: Color) -> bool:
-        # TODO: try to refactor this
-        conflicts = self._conflicts(user_id, color)
-        reassignment_is_feasible = len(conflicts) > 0
-        for conflict in conflicts:
-            reassignment_possible = False
-            for other_color in COLORS:
-                if color == other_color:
-                    continue
-                if self.available(conflict, other_color):
-                    reassignment_possible = True
-                    break
-            if not reassignment_possible:
+        conflicting_users = self._conflicts(user_id, color)
+        reassignment_is_feasible = len(conflicting_users) > 0
+        for conflicting_user_id in conflicting_users:
+            if not any(
+                color != other_color
+                and self.available(conflicting_user_id, other_color)
+                for other_color in COLORS
+            ):
                 reassignment_is_feasible = False
                 break
         return reassignment_is_feasible 
