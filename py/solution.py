@@ -34,8 +34,7 @@ def solve(users: Dict[UserID, Vector3], sats: Dict[SatelliteId, Vector3]) -> Dic
                         solution[conflicting_user_id] = (satellite.id, new_color)
                     satellite.assign(user_id, color)
                     solution[user_id] = (satellite.id, color)
-
-    # TODO: move database solution to solve function        
+        
     return solution
 
 class Database:
