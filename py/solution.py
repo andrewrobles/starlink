@@ -33,7 +33,7 @@ class Database:
     satellites = {}
     solution = {}
 
-    def __init__(self, users, sats):
+    def __init__(self, users: Dict[User, Vector3], sats: Dict[Sat, Vector3]):
         for user_id in users:
             user_vector = users[user_id]
             Database.users[user_id] = User(user_id, user_vector)
@@ -43,13 +43,13 @@ class Database:
             Database.satellites[satellite_id] = Satellite(satellite_id, satellite_vector)
 
 class User:
-    def __init__(self, id, vector):
+    def __init__(self, id: User, vector: Vector3):
         self.id = id
         self.assigned = False
         self.vector = vector
 
 class Satellite:
-    def __init__(self, id, vector):
+    def __init__(self, id: Sat, vector: Vector3):
         self.id = id
         self.vector = vector 
         self.assignments = []
@@ -67,27 +67,27 @@ class Satellite:
 
         return len(self.assignments) < MAX_USERS_PER_SAT
 
-    def conflicts(self, user, color):
+    def conflicts(self, user_id: User, color: Color):
         return [
             assignment['user'] for assignment in self.assignments
-            if assignment['color'] == color and self.is_user_within_10_degrees(self.vector, Database.users[user].vector, Database.users[assignment['user']].vector)
+            if assignment['color'] == color and self.is_user_within_10_degrees(self.vector, Database.users[user_id].vector, Database.users[assignment['user']].vector)
         ]
 
-    def reassign(self, user_id, color):
+    def reassign(self, user_id: User, color: Color):
         self.unassign(user_id)
         self.assign(user_id, color)
 
-    def assign(self, user_id, color):
+    def assign(self, user_id: User, color: Color):
         Database.users[user_id].assigned = True
         Database.solution[user_id] = (self.id, color)
         self.assignments.append({ 'user': user_id, 'color': color })
 
-    def unassign(self, user):
+    def unassign(self, user_id: User):
         for index, assignment in enumerate(self.assignments):
-            if assignment['user'] == user:
+            if assignment['user'] == user_id:
                 self.assignments.pop(index)
 
-    def can_make_room_for(self, user_id, color):
+    def can_make_room_for(self, user_id: User, color: Color):
         conflicts = self.conflicts(user_id, color)
         reassignment_is_feasible = len(conflicts) > 0
         for conflict in conflicts:
@@ -103,7 +103,7 @@ class Satellite:
                 break
         return reassignment_is_feasible 
     
-    def make_room_for(self, user_id, color):
+    def make_room_for(self, user_id: User, color: Color):
         conflicts = self.conflicts(user_id, color)
         reassignment_is_feasible = len(conflicts) > 0
         reassignments = {}
@@ -122,10 +122,10 @@ class Satellite:
                 break  
         return reassignments
 
-    def is_beam_within_45_degrees(self, user, satellite):
+    def is_beam_within_45_degrees(self, user: Vector3, satellite: Vector3):
         return 180 - user.angle_between(Vector3(0, 0, 0), satellite) <= 45
 
-    def is_user_within_10_degrees(self, satellite, user_1, user_2):
+    def is_user_within_10_degrees(self, satellite: Vector3, user_1: Vector3, user_2: Vector3):
         vec1 = user_1 - satellite 
         vec2 = user_2 - satellite
 
