@@ -21,9 +21,7 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
         for user_id in satellite.viable_users:
             for color in COLORS:
                 if satellite.can_make_room_for(user_id, color):
-                    reassignments = satellite.make_room_for(user_id, color)
-                    for user_to_reassign, color_to_reassign_to in reassignments.items():
-                        satellite.reassign(user_to_reassign, color_to_reassign_to)
+                    satellite.make_room_for(user_id, color)
                     satellite.assign(user_id, color)
                       
     return Database.solution
@@ -77,10 +75,6 @@ class Satellite:
 
         return len(self.assignments) < MAX_USERS_PER_SAT
 
-    def reassign(self, user_id: User, color: Color):
-        self._unassign(user_id)
-        self.assign(user_id, color)
-
     def assign(self, user_id: User, color: Color):
         user = Database.users[user_id]
         user.assigned = True
@@ -105,15 +99,13 @@ class Satellite:
         return reassignment_is_feasible 
     
     def make_room_for(self, user_id: User, color: Color):
-        reassignments = {}
-        for conflict in self._conflicts(user_id, color):
+        for conflict_user_id in self._conflicts(user_id, color):
             for other_color in COLORS:
                 if color == other_color:
                     continue
-                if self.available(user=conflict, color=other_color):
-                    reassignments[conflict] = other_color
+                if self.available(user=conflict_user_id, color=other_color):
+                    self._reassign(conflict_user_id, other_color)
                     break  
-        return reassignments
 
     def _is_beam_within_45_degrees(self, user: Vector3, satellite: Vector3):
         return 180 - user.angle_between(Vector3(0, 0, 0), satellite) <= 45
@@ -141,3 +133,7 @@ class Satellite:
         for index, id in enumerate(self.assignments):
             if id == user_id:
                 self.assignments.pop(index)
+    
+    def _reassign(self, user_id: User, color: Color):
+        self._unassign(user_id)
+        self.assign(user_id, color)
