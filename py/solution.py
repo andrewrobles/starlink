@@ -11,6 +11,9 @@ SatelliteId = Sat
 
 def solve(users: Dict[UserID, Vector3], sats: Dict[SatelliteId, Vector3]) -> Dict[UserID, Tuple[SatelliteId, Color]]:
 
+    solution = {}
+
+    # TODO: move users and satellites back into the static methods for each class
     Database.load(users, sats)
 
     for satellite in Database.satellites.values():
@@ -18,21 +21,26 @@ def solve(users: Dict[UserID, Vector3], sats: Dict[SatelliteId, Vector3]) -> Dic
             for color in COLORS:
                 if satellite.available(user_id=user_id, color=color):
                     satellite.assign(user_id, color)
+                    solution[user_id] = (satellite.id, color)
                     break  
 
     for satellite in Database.satellites.values():
         for user_id in satellite.viable_users:
             for color in COLORS:
                 if satellite.can_make_room_for(user_id, color):
-                    satellite.make_room_for(user_id, color)
+                    reassignments = satellite.make_room_for(user_id, color)
+                    for conflicting_user_id, new_color in reassignments.items():
+                        satellite.reassign(conflicting_user_id, new_color)
+                        solution[conflicting_user_id] = (satellite.id, new_color)
                     satellite.assign(user_id, color)
-                      
-    return Database.solution
+                    solution[user_id] = (satellite.id, color)
+
+    # TODO: move database solution to solve function        
+    return solution
 
 class Database:
     users = {}
     satellites = {}
-    solution = {}
 
     @classmethod
     def load(self, users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> None:
@@ -59,6 +67,7 @@ class Satellite:
 
     @property
     def viable_users(self) -> List[UserID]:
+        # TODO: optimize this function by only computing beams within 45 degrees once then filtering out the users that are assigned
         return [
             user_id for user_id in Database.users
             if not Database.users[user_id].assigned
@@ -82,10 +91,14 @@ class Satellite:
         user = Database.users[user_id]
         user.assigned = True
         user.color = color
-        Database.solution[user_id] = (self.id, color)
         self.assignments.append(user_id)
 
+    def reassign(self, user_id: User, color: Color) -> None:
+        self._unassign(user_id)
+        self.assign(user_id, color)
+
     def can_make_room_for(self, user_id: User, color: Color) -> bool:
+        # TODO: try to refactor this
         conflicts = self._conflicts(user_id, color)
         reassignment_is_feasible = len(conflicts) > 0
         for conflict in conflicts:
@@ -102,13 +115,15 @@ class Satellite:
         return reassignment_is_feasible 
     
     def make_room_for(self, user_id: User, color: Color) -> None:
+        reassignments = {}
         for conflict_user_id in self._conflicts(user_id, color):
             for other_color in COLORS:
                 if color == other_color:
                     continue
                 if self.available(user_id=conflict_user_id, color=other_color):
-                    self._reassign(conflict_user_id, other_color)
+                    reassignments[conflict_user_id] = other_color
                     break  
+        return reassignments
 
     def _is_beam_within_45_degrees(self, user: Vector3, satellite: Vector3) -> bool:
         return 180 - user.angle_between(Vector3(0, 0, 0), satellite) <= 45
@@ -137,6 +152,3 @@ class Satellite:
             if id == user_id:
                 self.assignments.pop(index)
     
-    def _reassign(self, user_id: User, color: Color) -> None:
-        self._unassign(user_id)
-        self.assign(user_id, color)
