@@ -56,12 +56,20 @@ class Satellite:
 
     @property
     def viable_users(self):
-        return [user_id for user_id in Database.users if not Database.users[user_id].assigned and self.is_beam_within_45_degrees(Database.users[user_id].vector, self.vector)]
+        return [
+            user_id for user_id in Database.users
+            if not Database.users[user_id].assigned
+            and self.is_beam_within_45_degrees(Database.users[user_id].vector, self.vector)
+        ]
 
     def available(self, **kwargs):
         if 'user' in kwargs and 'color' in kwargs:
             return len(self.assignments) < MAX_USERS_PER_SAT and all(
-            not self.is_user_within_10_degrees(self.vector, Database.users[kwargs['user']].vector, Database.users[assignment['user']].vector)
+            not self.is_user_within_10_degrees(
+                self.vector,
+                Database.users[kwargs['user']].vector,
+                Database.users[assignment['user']].vector
+            )
             for assignment in self.assignments if assignment['color'] == kwargs['color']
         )
 
@@ -70,7 +78,11 @@ class Satellite:
     def conflicts(self, user_id: User, color: Color):
         return [
             assignment['user'] for assignment in self.assignments
-            if assignment['color'] == color and self.is_user_within_10_degrees(self.vector, Database.users[user_id].vector, Database.users[assignment['user']].vector)
+            if assignment['color'] == color and self.is_user_within_10_degrees(
+                self.vector,
+                Database.users[user_id].vector,
+                Database.users[assignment['user']].vector
+            )
         ]
 
     def reassign(self, user_id: User, color: Color):
