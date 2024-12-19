@@ -7,10 +7,12 @@ COLORS = [Color.A, Color.B, Color.C, Color.D]
 
 def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tuple[Sat, Color]]:
     for satellite_id in sats:
-        Database.satellites[satellite_id] = Satellite(satellite_id, sats, users)
+        satellite_vector = sats[satellite_id]
+        Database.satellites[satellite_id] = Satellite(satellite_id, satellite_vector)
 
     for user_id in users:
-        Database.users[user_id] = User(user_id)
+        user_vector = users[user_id]
+        Database.users[user_id] = User(user_id, user_vector)
 
     for satellite_id, satellite in Database.satellites.items():
         for user_id in satellite.viable_users:
@@ -39,24 +41,25 @@ class Database:
     solution = {}
 
 class User:
-    def __init__(self, id):
+    def __init__(self, id, vector):
+        self.id = id
         self.assigned = False
+        self.vector = vector
 
 class Satellite:
-    def __init__(self, id, satellites, users):
+    def __init__(self, id, vector):
         self.id = id
-        self.vector = satellites[id] 
-        self.users = users
+        self.vector = vector 
         self.assignments = []
 
     @property
     def viable_users(self):
-        return [user_id for user_id in self.users if not Database.users[user_id].assigned and self.is_beam_within_45_degrees(self.users[user_id], self.vector)]
+        return [user_id for user_id in Database.users if not Database.users[user_id].assigned and self.is_beam_within_45_degrees(Database.users[user_id].vector, self.vector)]
 
     def available(self, **kwargs):
         if 'user' in kwargs and 'color' in kwargs:
             return len(self.assignments) < MAX_USERS_PER_SAT and all(
-            not self.is_user_within_10_degrees(self.vector, self.users[kwargs['user']], self.users[assignment['user']])
+            not self.is_user_within_10_degrees(self.vector, Database.users[kwargs['user']].vector, Database.users[assignment['user']].vector)
             for assignment in self.assignments if assignment['color'] == kwargs['color']
         )
 
@@ -65,7 +68,7 @@ class Satellite:
     def conflicts(self, user, color):
         return [
             assignment['user'] for assignment in self.assignments
-            if assignment['color'] == color and self.is_user_within_10_degrees(self.vector, self.users[user], self.users[assignment['user']])
+            if assignment['color'] == color and self.is_user_within_10_degrees(self.vector, Database.users[user].vector, Database.users[assignment['user']].vector)
         ]
 
     def reassign(self, user_id, color):
