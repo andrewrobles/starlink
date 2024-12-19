@@ -46,12 +46,6 @@ class User:
     users = {}
 
     def __init__(self, id):
-        """
-        Initializes a User instance.
-
-        Args:
-            id (int): The unique ID of the user.
-        """
         self.assigned = False
 
 class Satellite:
