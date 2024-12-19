@@ -178,7 +178,7 @@ class Satellite:
     
     def make_room_for(self, user_id: User, color: Color) -> None:
         """
-        Resolves conflicts by reassigning conflicting users to new colors.
+        Define new color assignments for conflicting users.
 
         Args:
             user_id (UserID): ID of the new user.
