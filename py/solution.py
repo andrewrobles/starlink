@@ -24,7 +24,7 @@ def solve(users: Dict[UserID, Vector3], sats: Dict[SatelliteId, Vector3]) -> Dic
     for satellite in Satellite.satellites.values():
         for user_id in satellite.available_users:
             for color in COLORS:
-                if satellite.available(user_id=user_id, color=color):
+                if satellite.available(user_id, color):
                     satellite.assign(user_id, color)
                     solution[user_id] = (satellite.id, color)
                     break  
@@ -70,18 +70,16 @@ class Satellite:
             if not User.users[user_id].assigned
         ]
 
-    def available(self, **kwargs) -> bool:
-        if 'user_id' in kwargs and 'color' in kwargs:
-            return len(self.assignments) < MAX_USERS_PER_SAT and all(
+    def available(self, user_id, color) -> bool:
+        return len(self.assignments) < MAX_USERS_PER_SAT and all(
             not self._is_user_within_10_degrees(
                 self.vector,
-                User.users[kwargs['user_id']].vector,
-                User.users[user_id].vector
+                User.users[user_id].vector,
+                User.users[other_user_id].vector
             )
-            for user_id in self.assignments if User.users[user_id].color == kwargs['color']
+            for other_user_id in self.assignments if User.users[other_user_id].color == color
         )
 
-        return len(self.assignments) < MAX_USERS_PER_SAT
 
     def assign(self, user_id: User, color: Color) -> None:
         user = User.users[user_id]
@@ -102,7 +100,7 @@ class Satellite:
             for other_color in COLORS:
                 if color == other_color:
                     continue
-                if self.available(user_id=conflict, color=other_color):
+                if self.available(conflict, other_color):
                     reassignment_possible = True
                     break
             if not reassignment_possible:
@@ -116,7 +114,7 @@ class Satellite:
             for other_color in COLORS:
                 if color == other_color:
                     continue
-                if self.available(user_id=conflict_user_id, color=other_color):
+                if self.available(conflict_user_id, other_color):
                     reassignments[conflict_user_id] = other_color
                     break  
         return reassignments
