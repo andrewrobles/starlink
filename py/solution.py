@@ -29,10 +29,9 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                 if satellite.can_make_room_for(user_id, color):
                     reassignments = satellite.make_room_for(user_id, color)
                     for user_to_reassign, color_to_reassign_to in reassignments.items():
-                        if satellite.available():
-                            solution[user_to_reassign] = (satellite_id, color_to_reassign_to)
-                            satellite.unassign(user_to_reassign)
-                            satellite.assign(user_to_reassign, color_to_reassign_to)
+                        solution[user_to_reassign] = (satellite_id, color_to_reassign_to)
+                        satellite.unassign(user_to_reassign)
+                        satellite.assign(user_to_reassign, color_to_reassign_to)
                     solution[user_id] = (satellite_id, color)
                     User.users[user_id].assigned = True
                     satellite.assign(user_id, color)
