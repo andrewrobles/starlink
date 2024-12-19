@@ -13,10 +13,15 @@ def solve(users: Dict[UserID, Vector3], sats: Dict[SatelliteId, Vector3]) -> Dic
 
     solution = {}
 
-    # TODO: move users and satellites back into the static methods for each class
-    Database.load(users, sats)
+    for user_id in users:
+        user_vector = users[user_id]
+        User.users[user_id] = User(user_id, user_vector)
 
-    for satellite in Database.satellites.values():
+    for satellite_id in sats:
+        satellite_vector = sats[satellite_id]
+        Satellite.satellites[satellite_id] = Satellite(satellite_id, satellite_vector)
+
+    for satellite in Satellite.satellites.values():
         for user_id in satellite.viable_users:
             for color in COLORS:
                 if satellite.available(user_id=user_id, color=color):
@@ -24,7 +29,7 @@ def solve(users: Dict[UserID, Vector3], sats: Dict[SatelliteId, Vector3]) -> Dic
                     solution[user_id] = (satellite.id, color)
                     break  
 
-    for satellite in Database.satellites.values():
+    for satellite in Satellite.satellites.values():
         for user_id in satellite.viable_users:
             for color in COLORS:
                 if satellite.can_make_room_for(user_id, color):
@@ -37,21 +42,9 @@ def solve(users: Dict[UserID, Vector3], sats: Dict[SatelliteId, Vector3]) -> Dic
         
     return solution
 
-class Database:
-    users = {}
-    satellites = {}
-
-    @classmethod
-    def load(self, users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> None:
-        for user_id in users:
-            user_vector = users[user_id]
-            Database.users[user_id] = User(user_id, user_vector)
-
-        for satellite_id in sats:
-            satellite_vector = sats[satellite_id]
-            Database.satellites[satellite_id] = Satellite(satellite_id, satellite_vector)
-
 class User:
+    users = {}
+
     def __init__(self, id: User, vector: Vector3) -> None:
         self.id = id
         self.assigned = False
@@ -59,6 +52,8 @@ class User:
         self.color = None
 
 class Satellite:
+    satellites = {}
+
     def __init__(self, id: Sat, vector: Vector3) -> None:
         self.id = id
         self.vector = vector 
@@ -68,9 +63,9 @@ class Satellite:
     def viable_users(self) -> List[UserID]:
         # TODO: optimize this function by only computing beams within 45 degrees once then filtering out the users that are assigned
         return [
-            user_id for user_id in Database.users
-            if not Database.users[user_id].assigned
-            and self._is_beam_within_45_degrees(Database.users[user_id].vector, self.vector)
+            user_id for user_id in User.users
+            if not User.users[user_id].assigned
+            and self._is_beam_within_45_degrees(User.users[user_id].vector, self.vector)
         ]
 
     def available(self, **kwargs) -> bool:
@@ -78,16 +73,16 @@ class Satellite:
             return len(self.assignments) < MAX_USERS_PER_SAT and all(
             not self._is_user_within_10_degrees(
                 self.vector,
-                Database.users[kwargs['user_id']].vector,
-                Database.users[user_id].vector
+                User.users[kwargs['user_id']].vector,
+                User.users[user_id].vector
             )
-            for user_id in self.assignments if Database.users[user_id].color == kwargs['color']
+            for user_id in self.assignments if User.users[user_id].color == kwargs['color']
         )
 
         return len(self.assignments) < MAX_USERS_PER_SAT
 
     def assign(self, user_id: User, color: Color) -> None:
-        user = Database.users[user_id]
+        user = User.users[user_id]
         user.assigned = True
         user.color = color
         self.assignments.append(user_id)
@@ -139,10 +134,10 @@ class Satellite:
     def _conflicts(self, user_id: User, color: Color) -> List[UserID]:
         return [
             id for id in self.assignments
-            if Database.users[id].color == color and self._is_user_within_10_degrees(
+            if User.users[id].color == color and self._is_user_within_10_degrees(
                 self.vector,
-                Database.users[user_id].vector,
-                Database.users[id].vector
+                User.users[user_id].vector,
+                User.users[id].vector
             )
         ]
 
