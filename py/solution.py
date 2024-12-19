@@ -1,10 +1,9 @@
 from typing import Dict, List, Tuple 
 from util import Color, Sat, User, Vector3
 
-# Constants
-MAX_USERS_PER_SAT = 32  # Maximum users a satellite can handle simultaneously
-MIN_BEAM_INTERFERENCE = 10  # Minimum angle in degrees to avoid beam interference
-COLORS = [Color.A, Color.B, Color.C, Color.D]  # Available beam colors
+MAX_USERS_PER_SAT = 32 
+MIN_BEAM_INTERFERENCE = 10 
+COLORS = [Color.A, Color.B, Color.C, Color.D] 
 
 # Aliases for clarity
 UserID = User
