@@ -7,19 +7,19 @@ COLORS = [Color.A, Color.B, Color.C, Color.D]
 
 def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tuple[Sat, Color]]:
     for satellite_id in sats:
-        Satellite.satellites[satellite_id] = Satellite(satellite_id, sats, users)
+        Database.satellites[satellite_id] = Satellite(satellite_id, sats, users)
 
     for user_id in users:
-        User.users[user_id] = User(user_id)
+        Database.users[user_id] = User(user_id)
 
-    for satellite_id, satellite in Satellite.satellites.items():
+    for satellite_id, satellite in Database.satellites.items():
         for user_id in satellite.viable_users:
             for color in COLORS:
                 if satellite.available(user=user_id, color=color):
                     satellite.assign(user_id, color)
                     break  
 
-    for satellite_id, satellite in Satellite.satellites.items():
+    for satellite_id, satellite in Database.satellites.items():
         for user_id in satellite.viable_users:
             for color in COLORS:
                 if satellite.can_make_room_for(user_id, color):
@@ -28,21 +28,21 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                         satellite.reassign(user_to_reassign, color_to_reassign_to)
                     satellite.assign(user_id, color)
                       
-    return Satellite.solution
+    return Database.solution
 
 MAX_USERS_PER_SAT = 32
 MIN_BEAM_INTERFERENCE = 10
 
-class User:
+class Database:
     users = {}
+    satellites = {}
+    solution = {}
 
+class User:
     def __init__(self, id):
         self.assigned = False
 
 class Satellite:
-    satellites = {}
-    solution = {}
-
     def __init__(self, id, satellites, users):
         self.id = id
         self.vector = satellites[id] 
@@ -51,7 +51,7 @@ class Satellite:
 
     @property
     def viable_users(self):
-        return [user_id for user_id in self.users if not User.users[user_id].assigned and self.is_beam_within_45_degrees(self.users[user_id], self.vector)]
+        return [user_id for user_id in self.users if not Database.users[user_id].assigned and self.is_beam_within_45_degrees(self.users[user_id], self.vector)]
 
     def available(self, **kwargs):
         if 'user' in kwargs and 'color' in kwargs:
@@ -73,8 +73,8 @@ class Satellite:
         self.assign(user_id, color)
 
     def assign(self, user_id, color):
-        User.users[user_id].assigned = True
-        Satellite.solution[user_id] = (self.id, color)
+        Database.users[user_id].assigned = True
+        Database.solution[user_id] = (self.id, color)
         self.assignments.append({ 'user': user_id, 'color': color })
 
     def unassign(self, user):
