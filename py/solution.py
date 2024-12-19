@@ -6,8 +6,6 @@ import math
 COLORS = [Color.A, Color.B, Color.C, Color.D]
 
 def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tuple[Sat, Color]]:
-    solution = {}
-
     for satellite_id in sats:
         Satellite.satellites[satellite_id] = Satellite(satellite_id, sats, users)
 
@@ -18,8 +16,6 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
         for user_id in satellite.viable_users:
             for color in COLORS:
                 if satellite.available(user=user_id, color=color):
-                    solution[user_id] = (satellite_id, color)
-                    User.users[user_id].assigned = True
                     satellite.assign(user_id, color)
                     break  
 
@@ -29,14 +25,10 @@ def solve(users: Dict[User, Vector3], sats: Dict[Sat, Vector3]) -> Dict[User, Tu
                 if satellite.can_make_room_for(user_id, color):
                     reassignments = satellite.make_room_for(user_id, color)
                     for user_to_reassign, color_to_reassign_to in reassignments.items():
-                        solution[user_to_reassign] = (satellite_id, color_to_reassign_to)
-                        satellite.unassign(user_to_reassign)
-                        satellite.assign(user_to_reassign, color_to_reassign_to)
-                    solution[user_id] = (satellite_id, color)
-                    User.users[user_id].assigned = True
+                        satellite.reassign(user_to_reassign, color_to_reassign_to)
                     satellite.assign(user_id, color)
                       
-    return solution
+    return Satellite.solution
 
 MAX_USERS_PER_SAT = 32
 MIN_BEAM_INTERFERENCE = 10
@@ -49,6 +41,7 @@ class User:
 
 class Satellite:
     satellites = {}
+    solution = {}
 
     def __init__(self, id, satellites, users):
         self.id = id
@@ -75,8 +68,14 @@ class Satellite:
             if assignment['color'] == color and self.is_user_within_10_degrees(self.vector, self.users[user], self.users[assignment['user']])
         ]
 
-    def assign(self, user, color):
-        self.assignments.append({ 'user': user, 'color': color })
+    def reassign(self, user_id, color):
+        self.unassign(user_id)
+        self.assign(user_id, color)
+
+    def assign(self, user_id, color):
+        User.users[user_id].assigned = True
+        Satellite.solution[user_id] = (self.id, color)
+        self.assignments.append({ 'user': user_id, 'color': color })
 
     def unassign(self, user):
         for index, assignment in enumerate(self.assignments):
