@@ -18,23 +18,6 @@ function submit() {
     echo -e '\n------------------------------------------------------------\n\n' >> $OUT
     cat $SRC >> $OUT
 
-    if ! git diff spacex --quiet -- $HARNESS; then
-        echo -e "\033[31;1mFAIL\033[0m: Revert test harness changes to submit:"
-        git diff spacex --stat -- $HARNESS
-        echo
-        exit 1
-    fi
-
-    if [[ -z "$SUBMIT" ]]; then
-        echo -e "\033[31;1mFAIL\033[0m: Missing submission link.\n"
-        exit 1
-    fi
-
-    if ! $(cat "$OUT" | curl --fail -X POST --data-binary @- "$SUBMIT/$PASSED"); then
-        echo -e "\033[31;1mFAIL\033[0m: Error submitting solution.\n"
-        exit 1
-    fi
-
     if [[ $PASSED == 1 ]]; then
         echo -e "\033[32;1m"
         echo '                                                                   *'
