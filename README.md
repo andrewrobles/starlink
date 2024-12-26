@@ -31,6 +31,6 @@ Run `make` within the `/py` folder to run all tests.
 
 Test results will be printed to the console. This includes user coverage and runtime as well as failure to satisfy constraints.
 
-<img src="output.png" />
+<img src="output.png" style="width: 75%"/>
 
 
